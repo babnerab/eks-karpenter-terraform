@@ -379,3 +379,8 @@ Ensure service can continue in regional outages or major failures.
 - Transaction log backups every 15 minutes
 
 RTO & RPO depends on business line.
+Aurora Global Database replicating to another region
+EKS Cluster deployed via Terraform in multiple AZs
+S3 with Cross-Region Replication enabled
+CloudWatch Alarms trigger Lambda or Step Functions to spin up DR infra
+Route 53 Failover to redirect traffic to standby region
