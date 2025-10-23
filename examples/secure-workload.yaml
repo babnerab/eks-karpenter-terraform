@@ -1,0 +1,206 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: secure-workload
+  labels:
+    app: secure-workload
+    version: "1.0.0"
+    environment: "production"
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: secure-workload
+  template:
+    metadata:
+      labels:
+        app: secure-workload
+        version: "1.0.0"
+        environment: "production"
+    spec:
+      # Security Context
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      # Service Account
+      serviceAccountName: secure-workload-sa
+      # Security Constraints
+      containers:
+      - name: nginx
+        image: nginx:1.21
+        ports:
+        - containerPort: 80
+        # Security Context
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop:
+            - ALL
+        # Resource Limits
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        # Health Checks
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        # Volume Mounts
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: cache
+          mountPath: /var/cache/nginx
+      # Volumes
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: cache
+        emptyDir: {}
+      # Node Selection
+      nodeSelector:
+        kubernetes.io/arch: amd64
+        node-type: x86
+      # Tolerations
+      tolerations:
+      - key: "karpenter.sh/capacity-type"
+        operator: "Equal"
+        value: "spot"
+        effect: "NoSchedule"
+      # Affinity
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+              - key: node-type
+                operator: In
+                values: ["x86"]
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values: ["secure-workload"]
+              topologyKey: kubernetes.io/hostname
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: secure-workload-sa
+  namespace: default
+  annotations:
+    eks.amazonaws.com/role-arn: ""  # IRSA role ARN
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: secure-workload-service
+  labels:
+    app: secure-workload
+spec:
+  selector:
+    app: secure-workload
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: secure-workload-netpol
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: secure-workload
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    - podSelector:
+        matchLabels:
+          app: secure-workload
+    ports:
+    - protocol: TCP
+      port: 80
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: TCP
+      port: 53
+    - protocol: UDP
+      port: 53
+  - to:
+    - podSelector:
+        matchLabels:
+          app: secure-workload
+    ports:
+    - protocol: TCP
+      port: 80
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: secure-workload-secret
+  namespace: default
+type: Opaque
+data:
+  # Base64 encoded values
+  username: YWRtaW4=  # admin
+  password: c2VjdXJlLXBhc3N3b3Jk  # secure-password
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: secure-workload-external-secret
+  namespace: default
+spec:
+  refreshInterval: 1m
+  secretStoreRef:
+    name: aws-secrets-manager
+    kind: SecretStore
+  target:
+    name: secure-workload-external-secret
+    creationPolicy: Owner
+  data:
+  - secretKey: username
+    remoteRef:
+      key: secure-workload/database/credentials
+      property: username
+  - secretKey: password
+    remoteRef:
+      key: secure-workload/database/credentials
+      property: password
