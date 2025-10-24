@@ -115,9 +115,7 @@ The approach:
 Use EKS to handle cluster management (API server, etcd, control plane scaling).
 - Worker nodes run on EC2 instances with ASG, or Karpenter.
 - Manage deployments via GitHub Actions/Jenkins CI/CD pipelines.
-- Use Namespaces to separate environments (dev,devops, staging, prod).
-
-Leverage IAM roles for service accounts (IRSA) for secure pod-level permissions.
+- Create a eks cluster for each account where workloads will be allocated.
 
 Benefits:
 
