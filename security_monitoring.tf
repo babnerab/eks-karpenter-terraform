@@ -19,7 +19,7 @@ resource "aws_guardduty_detector_feature" "s3_data_events" {
 
 resource "aws_guardduty_detector_feature" "kubernetes_audit_logs" {
   detector_id = aws_guardduty_detector.main.id
-  name        = "KUBERNETES_AUDIT_LOGS"
+  name        = "EKS_AUDIT_LOGS"
   status      = "ENABLED"
 }
 
