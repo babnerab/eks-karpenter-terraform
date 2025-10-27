@@ -1,5 +1,6 @@
 # Pod Security Standards
 resource "kubernetes_manifest" "pod_security_standards" {
+  count = var.enable_kubernetes_addons ? 1 : 0
   manifest = {
     apiVersion = "v1"
     kind       = "Namespace"
@@ -12,10 +13,13 @@ resource "kubernetes_manifest" "pod_security_standards" {
       }
     }
   }
+
+  depends_on = [aws_eks_cluster.main]
 }
 
 # Network Policies
 resource "kubernetes_manifest" "default_deny_ingress" {
+  count = var.enable_kubernetes_addons ? 1 : 0
   manifest = {
     apiVersion = "networking.k8s.io/v1"
     kind       = "NetworkPolicy"
@@ -28,9 +32,12 @@ resource "kubernetes_manifest" "default_deny_ingress" {
       policyTypes = ["Ingress"]
     }
   }
+
+  depends_on = [aws_eks_cluster.main]
 }
 
 resource "kubernetes_manifest" "default_deny_egress" {
+  count = var.enable_kubernetes_addons ? 1 : 0
   manifest = {
     apiVersion = "networking.k8s.io/v1"
     kind       = "NetworkPolicy"
@@ -43,10 +50,13 @@ resource "kubernetes_manifest" "default_deny_egress" {
       policyTypes = ["Egress"]
     }
   }
+
+  depends_on = [aws_eks_cluster.main]
 }
 
 # RBAC - Cluster Admin Role
 resource "kubernetes_cluster_role" "cluster_admin" {
+  count = var.enable_kubernetes_addons ? 1 : 0
   metadata {
     name = "cluster-admin"
   }
@@ -56,10 +66,13 @@ resource "kubernetes_cluster_role" "cluster_admin" {
     resources  = ["*"]
     verbs      = ["*"]
   }
+
+  depends_on = [aws_eks_cluster.main]
 }
 
 # RBAC - Read-only Role
 resource "kubernetes_cluster_role" "read_only" {
+  count = var.enable_kubernetes_addons ? 1 : 0
   metadata {
     name = "read-only"
   }
@@ -69,10 +82,13 @@ resource "kubernetes_cluster_role" "read_only" {
     resources  = ["*"]
     verbs      = ["get", "list", "watch"]
   }
+
+  depends_on = [aws_eks_cluster.main]
 }
 
 # RBAC - Developer Role
 resource "kubernetes_cluster_role" "developer" {
+  count = var.enable_kubernetes_addons ? 1 : 0
   metadata {
     name = "developer"
   }
@@ -94,10 +110,13 @@ resource "kubernetes_cluster_role" "developer" {
     resources  = ["networkpolicies"]
     verbs      = ["get", "list", "watch", "create", "update", "patch", "delete"]
   }
+
+  depends_on = [aws_eks_cluster.main]
 }
 
 # Service Account for Karpenter with minimal permissions
 resource "kubernetes_service_account" "karpenter" {
+  count = var.enable_kubernetes_addons ? 1 : 0
   metadata {
     name      = "karpenter"
     namespace = "karpenter"
@@ -105,10 +124,13 @@ resource "kubernetes_service_account" "karpenter" {
       "eks.amazonaws.com/role-arn" = var.enable_irsa ? aws_iam_role.karpenter_service_account[0].arn : ""
     }
   }
+
+  depends_on = [aws_eks_cluster.main]
 }
 
 # Pod Security Policy (if supported)
 resource "kubernetes_manifest" "pod_security_policy" {
+  count = var.enable_kubernetes_addons && var.enable_psp ? 1 : 0
   manifest = {
     apiVersion = "policy/v1beta1"
     kind       = "PodSecurityPolicy"
@@ -144,10 +166,13 @@ resource "kubernetes_manifest" "pod_security_policy" {
       }
     }
   }
+
+  depends_on = [aws_eks_cluster.main]
 }
 
 # Security Context Constraints
 resource "kubernetes_manifest" "security_context_constraints" {
+  count = var.enable_kubernetes_addons && var.enable_scc ? 1 : 0
   manifest = {
     apiVersion = "security.openshift.io/v1"
     kind       = "SecurityContextConstraints"
@@ -196,10 +221,13 @@ resource "kubernetes_manifest" "security_context_constraints" {
       ]
     }
   }
+
+  depends_on = [aws_eks_cluster.main]
 }
 
 # Admission Controllers
 resource "kubernetes_manifest" "admission_webhook" {
+  count = var.enable_kubernetes_addons && var.enable_admission_webhook ? 1 : 0
   manifest = {
     apiVersion = "admissionregistration.k8s.io/v1"
     kind       = "ValidatingAdmissionWebhook"
@@ -230,4 +258,6 @@ resource "kubernetes_manifest" "admission_webhook" {
       }
     ]
   }
+
+  depends_on = [aws_eks_cluster.main]
 }

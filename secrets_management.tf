@@ -36,6 +36,7 @@ resource "aws_kms_alias" "secrets" {
 
 # External Secrets Operator
 resource "helm_release" "external_secrets" {
+  count = var.enable_kubernetes_addons ? 1 : 0
   name       = "external-secrets"
   repository = "https://charts.external-secrets.io"
   chart      = "external-secrets"
@@ -112,6 +113,7 @@ resource "aws_iam_role_policy" "external_secrets" {
 
 # Secret Store for External Secrets
 resource "kubernetes_manifest" "secret_store" {
+  count = var.enable_kubernetes_addons ? 1 : 0
   manifest = {
     apiVersion = "external-secrets.io/v1beta1"
     kind       = "SecretStore"
@@ -141,6 +143,7 @@ resource "kubernetes_manifest" "secret_store" {
 
 # External Secret
 resource "kubernetes_manifest" "external_secret" {
+  count = var.enable_kubernetes_addons ? 1 : 0
   manifest = {
     apiVersion = "external-secrets.io/v1beta1"
     kind       = "ExternalSecret"

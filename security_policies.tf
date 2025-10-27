@@ -1,5 +1,6 @@
 # OPA Gatekeeper for Policy Enforcement
 resource "helm_release" "gatekeeper" {
+  count = var.enable_kubernetes_addons ? 1 : 0
   name       = "gatekeeper"
   repository = "https://open-policy-agent.github.io/gatekeeper/charts"
   chart      = "gatekeeper"
@@ -21,6 +22,7 @@ resource "helm_release" "gatekeeper" {
 
 # Constraint Templates
 resource "kubernetes_manifest" "k8s_required_labels" {
+  count = var.enable_kubernetes_addons ? 1 : 0
   manifest = {
     apiVersion = "templates.gatekeeper.sh/v1beta1"
     kind       = "ConstraintTemplate"
@@ -70,6 +72,7 @@ resource "kubernetes_manifest" "k8s_required_labels" {
 
 # Constraint for required labels
 resource "kubernetes_manifest" "required_labels_constraint" {
+  count = var.enable_kubernetes_addons ? 1 : 0
   manifest = {
     apiVersion = "constraints.gatekeeper.sh/v1beta1"
     kind       = "K8sRequiredLabels"
@@ -96,6 +99,7 @@ resource "kubernetes_manifest" "required_labels_constraint" {
 
 # Constraint Template for resource limits
 resource "kubernetes_manifest" "k8s_required_limits" {
+  count = var.enable_kubernetes_addons ? 1 : 0
   manifest = {
     apiVersion = "templates.gatekeeper.sh/v1beta1"
     kind       = "ConstraintTemplate"
@@ -145,6 +149,7 @@ resource "kubernetes_manifest" "k8s_required_limits" {
 
 # Constraint for resource limits
 resource "kubernetes_manifest" "required_limits_constraint" {
+  count = var.enable_kubernetes_addons ? 1 : 0
   manifest = {
     apiVersion = "constraints.gatekeeper.sh/v1beta1"
     kind       = "K8sRequiredLimits"
@@ -171,6 +176,7 @@ resource "kubernetes_manifest" "required_limits_constraint" {
 
 # Constraint Template for image security
 resource "kubernetes_manifest" "k8s_allowed_images" {
+  count = var.enable_kubernetes_addons ? 1 : 0
   manifest = {
     apiVersion = "templates.gatekeeper.sh/v1beta1"
     kind       = "ConstraintTemplate"
@@ -220,6 +226,7 @@ resource "kubernetes_manifest" "k8s_allowed_images" {
 
 # Constraint for allowed images
 resource "kubernetes_manifest" "allowed_images_constraint" {
+  count = var.enable_kubernetes_addons ? 1 : 0
   manifest = {
     apiVersion = "constraints.gatekeeper.sh/v1beta1"
     kind       = "K8sAllowedImages"
@@ -251,6 +258,7 @@ resource "kubernetes_manifest" "allowed_images_constraint" {
 
 # Kyverno for additional policy enforcement
 resource "helm_release" "kyverno" {
+  count = var.enable_kubernetes_addons ? 1 : 0
   name       = "kyverno"
   repository = "https://kyverno.github.io/kyverno/"
   chart      = "kyverno"
@@ -268,6 +276,7 @@ resource "helm_release" "kyverno" {
 
 # Kyverno Policy for Pod Security
 resource "kubernetes_manifest" "kyverno_pod_security" {
+  count = var.enable_kubernetes_addons ? 1 : 0
   manifest = {
     apiVersion = "kyverno.io/v1"
     kind       = "ClusterPolicy"

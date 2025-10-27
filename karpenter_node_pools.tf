@@ -1,5 +1,6 @@
 # Karpenter Node Pool for x86 instances
 resource "kubernetes_manifest" "karpenter_node_pool_x86" {
+  count = var.enable_kubernetes_addons ? 1 : 0
   manifest = {
     apiVersion = "karpenter.sh/v1beta1"
     kind       = "NodePool"
@@ -57,6 +58,7 @@ resource "kubernetes_manifest" "karpenter_node_pool_x86" {
 
 # Karpenter Node Pool for ARM64 (Graviton) instances
 resource "kubernetes_manifest" "karpenter_node_pool_arm64" {
+  count = var.enable_kubernetes_addons ? 1 : 0
   manifest = {
     apiVersion = "karpenter.sh/v1beta1"
     kind       = "NodePool"
@@ -114,6 +116,7 @@ resource "kubernetes_manifest" "karpenter_node_pool_arm64" {
 
 # Karpenter Node Pool for Spot instances (mixed x86 and ARM64)
 resource "kubernetes_manifest" "karpenter_node_pool_spot" {
+  count = var.enable_kubernetes_addons ? 1 : 0
   manifest = {
     apiVersion = "karpenter.sh/v1beta1"
     kind       = "NodePool"
@@ -171,6 +174,7 @@ resource "kubernetes_manifest" "karpenter_node_pool_spot" {
 
 # EC2 Node Class
 resource "kubernetes_manifest" "karpenter_ec2_node_class" {
+  count = var.enable_kubernetes_addons ? 1 : 0
   manifest = {
     apiVersion = "karpenter.k8s.aws/v1beta1"
     kind       = "EC2NodeClass"

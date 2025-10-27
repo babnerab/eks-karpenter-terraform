@@ -4,6 +4,24 @@ variable "aws_region" {
   default     = "us-west-2"
 }
 
+variable "aws_profile" {
+  description = "AWS CLI profile name to use for credentials (optional)"
+  type        = string
+  default     = null
+}
+
+variable "kubeconfig_context" {
+  description = "Kubeconfig context name to use (set via aws eks update-kubeconfig --alias)"
+  type        = string
+  default     = null
+}
+
+variable "enable_kubernetes_addons" {
+  description = "Enable Helm/Kubernetes resources (set true after EKS cluster is ready)"
+  type        = bool
+  default     = false
+}
+
 variable "project_name" {
   description = "Name of the project"
   type        = string
@@ -68,4 +86,22 @@ variable "spot_instance_types" {
   description = "List of instance types for spot instances"
   type        = list(string)
   default     = ["m5.large", "m5.xlarge", "m6g.large", "m6g.xlarge", "c5.large", "c5.xlarge", "c6g.large", "c6g.xlarge", "r5.large", "r5.xlarge", "r6g.large", "r6g.xlarge"]
+}
+
+variable "enable_psp" {
+  description = "Enable PodSecurityPolicy (removed in Kubernetes >=1.25)."
+  type        = bool
+  default     = false
+}
+
+variable "enable_scc" {
+  description = "Enable OpenShift SecurityContextConstraints (not supported on EKS)."
+  type        = bool
+  default     = false
+}
+
+variable "enable_admission_webhook" {
+  description = "Enable example validating admission webhook (requires in-cluster service)."
+  type        = bool
+  default     = false
 }

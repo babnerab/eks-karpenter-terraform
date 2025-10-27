@@ -1,5 +1,6 @@
 # Karpenter Helm Chart
 resource "helm_release" "karpenter" {
+  count      = var.enable_kubernetes_addons ? 1 : 0
   name       = "karpenter"
   repository = "oci://public.ecr.aws/karpenter"
   chart      = "karpenter"
